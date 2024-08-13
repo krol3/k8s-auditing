@@ -1,0 +1,31 @@
+# Releases image: https://github.com/kubernetes-sigs/kind/releases
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+featureGates:
+  ComponentSLIs: true
+  PodSecurity: true
+nodes:
+- role: control-plane
+  image: kindest/node:v1.27.11@sha256:681253009e68069b8e01aad36a1e0fa8cf18bb0ab3e5c4069b2e65cafdd70843
+  kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+        # enable auditing flags on the API server
+        extraArgs:
+          audit-log-path: /etc/kubernetes/audit/audit.log
+          audit-policy-file: /etc/kubernetes/audit/audit-policy.yaml
+        # mount new files / directories on the control plane
+        extraVolumes:
+          - name: audit-policies
+            hostPath: /etc/kubernetes/audit
+            mountPath: /etc/kubernetes/audit
+            readOnly: false
+            pathType: "DirectoryOrCreate"
+  # mount the local file on the control plane
+  extraMounts:
+  - hostPath: /tmp/k8s02/
+    containerPath: /etc/kubernetes/audit
+    readOnly: false
+    selinuxRelabel: false
+    propagation: None
